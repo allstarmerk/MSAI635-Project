@@ -1,0 +1,5 @@
+numpy
+gymnasium
+pytest
+matplotlib
+pandas
