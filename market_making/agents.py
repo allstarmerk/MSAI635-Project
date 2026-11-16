@@ -40,3 +40,18 @@ class TabularAgent:
         shape = (2 * q_max + 1, n_time_bins, len(ACTIONS))
         self.Q = np.zeros(shape)
         self.visits = np.zeros(shape, dtype=np.int64)
+
+    #state / action helpers 
+    def state_index(self, q: int, t: int) -> tuple[int, int]:
+        time_bin = min(t * self.n_time_bins // self.T, self.n_time_bins - 1)
+        return q + self.q_max, time_bin
+
+    def greedy_action(self, s: tuple[int, int]) -> int:
+        q_vals = self.Q[s]
+        best = np.flatnonzero(q_vals == q_vals.max())
+        return int(self.rng.choice(best)) if len(best) > 1 else int(best[0])
+
+    def select_action(self, s: tuple[int, int], eps: float) -> int:
+        if self.rng.random() < eps:
+            return int(self.rng.integers(len(ACTIONS)))
+        return self.greedy_action(s)
