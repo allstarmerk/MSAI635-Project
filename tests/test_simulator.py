@@ -1,8 +1,8 @@
 """Verification tests matching the interim report, Section 4:
 
-'We tested cash and inventory accounting, confirmed that empirical Poisson
-arrival rates are close to their specified values, verified that fill
-probability decreases with quote distance, and confirmed that Brownian
+'test cash and inventory accounting, confirm that empirical Poisson
+arrival rates are close to their specified values, verify that fill
+probability decreases with quote distance, and confirm that Brownian
 price increments have approximately zero mean and sufficient variance.'
 """
 import numpy as np

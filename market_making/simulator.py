@@ -1,6 +1,6 @@
 """Synthetic market simulator for inventory-aware market making.
 
-Implements the model from the project's interim report (Section 2.1-2.3):
+Implement the model from the project's interim report:
 Brownian mid-price, Poisson order arrivals, distance-dependent fill
 probability, and inventory/cash accounting with quadratic inventory
 penalty and terminal liquidation cost.
@@ -22,7 +22,7 @@ class SimulatorParams:
     T: int = 200                   # episode horizon (steps)
     q_max: int = 20                # hard inventory limit
     c_ticks: float = 1.0           # terminal liquidation cost, in ticks/unit
-    beta: float = 0.1              # inventory-penalty coefficient
+    zeta: float = 0.1              # inventory-penalty coefficient 
 
     @property
     def sigma(self) -> float:
@@ -100,7 +100,7 @@ class MarketSimulator:
         self.t += 1
 
         W_next = X_next + q_next * S_next
-        inv_penalty = p.beta * (q_next / p.q_max) ** 2
+        inv_penalty = p.zeta * (q_next / p.q_max) ** 2
         reward = (W_next - W_t) - inv_penalty
 
         done = self.t >= p.T
