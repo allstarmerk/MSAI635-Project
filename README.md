@@ -1,4 +1,4 @@
-# MSAI635 Project Inventory Aware Market Making in a Synthetic Market
+# MSAI635 Project IAMM in a Synthetic Market
 
 ## Overview
 
