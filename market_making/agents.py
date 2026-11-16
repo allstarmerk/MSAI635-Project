@@ -21,4 +21,22 @@ class TabularAgent:
         eps_start: float = 1.0,
         eps_end: float = 0.05,
         eps_decay_frac: float = 0.5,
-    
+        seed: int | None = None,
+    ):
+        if method not in METHODS:
+            raise ValueError(f"method must be one of {METHODS}, got {method!r}")
+        self.method = method
+        self.q_max = q_max
+        self.T = T
+        self.n_time_bins = n_time_bins
+        self.gamma = gamma
+        self.lr_min = lr_min
+        self.lr_power = lr_power
+        self.eps_start = eps_start
+        self.eps_end = eps_end
+        self.eps_decay_frac = eps_decay_frac
+        self.rng = np.random.default_rng(seed)
+
+        shape = (2 * q_max + 1, n_time_bins, len(ACTIONS))
+        self.Q = np.zeros(shape)
+        self.visits = np.zeros(shape, dtype=np.int64)
