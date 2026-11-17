@@ -55,3 +55,63 @@ class TabularAgent:
         if self.rng.random() < eps:
             return int(self.rng.integers(len(ACTIONS)))
         return self.greedy_action(s)
+
+    def act(self, q: int, q_max: int, t: int, T: int) -> tuple[int, int]:
+        """Greedy policy, same interface as the baselines."""
+        return ACTIONS[self.greedy_action(self.state_index(q, t))]
+
+    def epsilon(self, episode: int, n_episodes: int) -> float:
+        decay_eps = max(1, int(self.eps_decay_frac * n_episodes))
+        frac = min(episode / decay_eps, 1.0)
+        return self.eps_start + frac * (self.eps_end - self.eps_start)
+
+    #learning 
+    def update(self, s, a, r, s_next, a_next, done: bool) -> None:
+        if done:
+            target = r
+        elif self.method == "q_learning":
+            target = r + self.gamma * self.Q[s_next].max()
+        else:  # sarsa
+            target = r + self.gamma * self.Q[s_next][a_next]
+
+        sa = s + (a,)
+        self.visits[sa] += 1
+        # Visit count learning rate: rewards are noisy (inventory * price move),
+        # so a decaying step size averages the noise out; floored at lr_min.
+        lr = max(self.lr_min, self.visits[sa] ** -self.lr_power)
+        self.Q[sa] += lr * (target - self.Q[sa])
+
+    def train(self, sim: MarketSimulator, n_episodes: int) -> np.ndarray:
+        """Train on the simulator; returns the (penalized) return of each episode."""
+        returns = np.empty(n_episodes)
+        for ep in range(n_episodes):
+            eps = self.epsilon(ep, n_episodes)
+            sim.reset()
+            s = self.state_index(sim.q, sim.t)
+            a = self.select_action(s, eps)
+            total, done = 0.0, False
+            while not done:
+                d_bid, d_ask = ACTIONS[a]
+                _, r, done, _ = sim.step(d_bid, d_ask)
+                total += r
+                if done:
+                    self.update(s, a, r, None, None, True)
+                    break
+                s_next = self.state_index(sim.q, sim.t)
+                a_next = self.select_action(s_next, eps)
+                self.update(s, a, r, s_next, a_next, False)
+                s, a = s_next, a_next
+            returns[ep] = total
+        return returns
+
+    def save(self, path) -> None:
+        np.savez(path, Q=self.Q, visits=self.visits, method=self.method,
+                 q_max=self.q_max, T=self.T, n_time_bins=self.n_time_bins)
+
+    @classmethod
+    def load(cls, path) -> "TabularAgent":
+        data = np.load(path)
+        agent = cls(str(data["method"]), int(data["q_max"]), int(data["T"]),
+                    n_time_bins=int(data["n_time_bins"]))
+        agent.Q, agent.visits = data["Q"], data["visits"]
+        return agent
