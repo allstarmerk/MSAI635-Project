@@ -28,3 +28,21 @@ def run_episode(policy, params: SimulatorParams, seed: int) -> dict:
         "liquidation_cost": liquidation_cost,
         "penalized_return": total_reward,
     }
+
+
+def evaluate_policy(policy, params: SimulatorParams, seeds) -> pd.DataFrame:
+    return pd.DataFrame([run_episode(policy, params, s) for s in seeds])
+
+
+def summarize(results: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """Mean and standard error of each metric, one row per strategy."""
+    rows = {}
+    for name, df in results.items():
+        row = {}
+        for col in df.columns:
+            row[col] = df[col].mean()
+            row[f"{col}_se"] = df[col].std(ddof=1) / np.sqrt(len(df))
+        # Sharpe-like ratio across episodes: mean PnL / std PnL.
+        row["pnl_sharpe"] = df["pnl"].mean() / df["pnl"].std(ddof=1)
+        rows[name] = row
+    return pd.DataFrame(rows).T
